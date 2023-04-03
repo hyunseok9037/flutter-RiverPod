@@ -1,7 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class Counter extends StateNotifier<int>{
+  Counter(super.state);
+
+  void increment(){
+    state++;
+  }
+}
+
+final counterProvider = StateNotifierProvider<Counter, int>((ref) {
+  return Counter(0);
+});
+
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    // For widgets to be able to read providers, we need to wrap the entire
+    // application in a "ProviderScope" widget.
+    // This is where the state of our providers will be stored.
+    ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -16,23 +37,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({Key? key}) : super(key: key);
-
-  @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  // 상태 관리 변수
-  int number = 1;
-  
-  // 상태 관리 함수(의미 있는 함수)
-  void add(){
-    setState(() {
-      number = number+1;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +48,8 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            Expanded(child: HeaderPage(number)),
-            Expanded(child: BottomPage(add)),
+            Expanded(child: HeaderPage()),
+            Expanded(child: BottomPage()),
           ],
         ),
       ),
@@ -51,18 +57,17 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class HeaderPage extends StatelessWidget {
-  // 전달 받는 변수(매개변수라 생각합세)
- final int number;
-   HeaderPage(this.number,{Key? key}) : super(key: key);
+class HeaderPage extends ConsumerWidget {
+  HeaderPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final int num = ref.watch(counterProvider);
     return Container(
       color: Colors.red,
       child: Align(
         child: Text(
-          "$number",
+          "$num",
           style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -75,15 +80,12 @@ class HeaderPage extends StatelessWidget {
   }
 }
 
-class BottomPage extends StatelessWidget {
-
-  // Function add;
-  final add;
-
-  BottomPage(this.add,{Key? key}) : super(key: key);
+class BottomPage extends ConsumerWidget {
+  BottomPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final counter = ref.read(counterProvider.notifier);
     return Container(
       color: Colors.blue,
       child: Align(
@@ -92,7 +94,7 @@ class BottomPage extends StatelessWidget {
               backgroundColor: Colors.red
           ),
           onPressed: (){
-            add();
+            counter.increment();
           },
           child: Text("증가", style: TextStyle(
             color: Colors.white,
